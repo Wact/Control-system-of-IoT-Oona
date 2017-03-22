@@ -1,0 +1,49 @@
+/*  #FFEFD5 - light pink
+	#FFB5C5 - pink
+	*/
+
+body {
+	background-size: 1366px, 768px;
+	overflow-x: auto;
+    min-width: 1024px;
+	z-index: 0;
+}
+	
+.container {
+    position: relative;
+	margin: 0 auto;
+    width: 700px;
+    height: 700px;
+    z-index: 2;
+}
+	
+#content {
+	background-color: #FFEFDB;
+}
+
+#leds {
+	position: relative;
+	margin: 0 auto;
+	width: 700px;
+	height: 100px;
+	z-index: 2;
+}
+
+#error {
+	color: #FF0000;
+}
+
+#greeting {
+	color: #0000FF;
+}
+
+#authorization {
+	position: relative;
+	margin: 0 auto;
+	margin-top: 20%;
+	text-align: center;
+}
+
+#author {
+	color: #ffffff;
+}
