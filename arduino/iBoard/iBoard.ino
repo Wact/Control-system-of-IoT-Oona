@@ -1,6 +1,10 @@
 #include <SPI.h>
 #include <Ethernet.h>
 #include <Client.h>
+#include "digitalWriteFast.h"
+#include "nRF24L01.h"
+#include "iBoardRF24.h"
+#include <AESLib.h>
 
 // REAL MAC - 0x88, 0x9F, 0xFA, 0x58, 0xC7, 0x6D
 byte mac[] = { 0x00, 0xAA, 0xBB, 0xCC, 0xDA, 0x02 };   
@@ -28,6 +32,12 @@ String str = String(30);
 String data = String(30);
 String value = String(30);
 
+char msg[16];
+iBoardRF24 radio(12, 11, 8, 7, 9, PE7);
+const uint64_t pipe = 0xE8E8F0F0E1LL;
+uint8_t key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+String theMessage = "";
+
 void setup() {
   pinMode(buttonLed1, INPUT);
   pinMode(pinLed1, OUTPUT);
@@ -38,6 +48,21 @@ void setup() {
   delay(1);
   Serial.begin(9600);
   delay(1);
+  
+  radio.begin();
+  radio.openReadingPipe(1,pipe);
+  radio.startListening();
+  
+  radio.setAutoAck(1);
+  radio.setRetries(15,15);
+  radio.enableAckPayload();
+  radio.setPayloadSize(32);
+  
+  radio.openReadingPipe(1,pipe);
+  radio.setChannel(0x65);
+  
+  radio.setPALevel (RF24_PA_LOW);
+  radio.setDataRate (RF24_250KBPS);
 }
 
 // Check of pressing of the button which controll 'led1' 
@@ -58,6 +83,40 @@ void checkButtonLed1() {
       }
   } 
   digitalWrite(pinLed1, led1);
+}
+
+void checkRadioSignal() {
+  if (radio.available()){
+    for(int i = 0; i < 16; i++) {
+      radio.read(&msg[i], 1);
+      //Serial.print(msg[i]);
+    }
+    //Serial.println();
+    aes128_dec_single(key, msg);
+    /*Serial.println("DECRYPT:");
+    for (int i = 0; i < sizeof(msg); i++) {
+      Serial.print(msg[i]);
+    }
+    Serial.println();*/
+    int i = 0;
+    data = "";
+    value = "";
+    for(i; i<16; i++) {
+      if((char)msg[i]!='=')
+        data+=msg[i];
+      else
+        break;
+      //Serial.print(msg[i]);
+    }
+    //Serial.println();
+    for(i+=1; i<16; i++) {
+      if((char)msg[i]!=';')
+        value+=msg[i];
+      else
+        break;
+    }
+    if((value[0]<58) && (value[0]>47)){change = true;}
+  }
 }
 
 // Send data about ALL sensors in 'Oona'
@@ -128,5 +187,6 @@ void loop() {
     }
   }
   checkButtonLed1();
+  checkRadioSignal();
   if(change) { sendData(); change = false; }
 }
